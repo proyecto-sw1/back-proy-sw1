@@ -32,6 +32,56 @@
 $ yarn install
 ```
 
+## Documentación de la API
+
+La documentación de la API está disponible a través de Swagger UI. Una vez que la aplicación esté en ejecución, puedes acceder a la documentación en:
+
+```
+http://localhost:3000/api
+```
+
+La documentación incluye:
+- Descripción detallada de todos los endpoints
+- Esquemas de datos
+- Autenticación JWT
+- Ejemplos de peticiones y respuestas
+
+### ¿Cómo hacer que Swagger reconozca tus endpoints y modelos?
+
+Para que Swagger documente correctamente tus endpoints y modelos en futuros módulos, debes usar los siguientes decoradores:
+
+- `@ApiTags('nombre')` en la clase del controlador para agrupar los endpoints bajo una sección en Swagger.
+- `@ApiProperty({ description: 'Descripción del atributo' })` en cada propiedad de tus DTOs para que Swagger muestre los atributos en el request body.
+- `@ApiOperation({ summary: 'Descripción corta de la operación' })` en los métodos del controlador para describir el propósito del endpoint.
+- `@ApiResponse({ status: 200, description: 'Respuesta exitosa' })` para documentar las posibles respuestas.
+- `@ApiBearerAuth()` en los endpoints que requieren autenticación JWT.
+
+**Ejemplo mínimo para un DTO:**
+```ts
+import { ApiProperty } from '@nestjs/swagger';
+
+export class ExampleDto {
+  @ApiProperty({ description: 'Nombre del ejemplo' })
+  name: string;
+}
+```
+
+**Ejemplo mínimo para un controlador:**
+```ts
+import { Controller, Post, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+
+@ApiTags('ejemplo')
+@Controller('ejemplo')
+export class EjemploController {
+  @Post()
+  @ApiOperation({ summary: 'Crear un ejemplo' })
+  create(@Body() dto: ExampleDto) {
+    // ...
+  }
+}
+```
+
 ## Compile and run the project
 
 ```bash

@@ -17,7 +17,7 @@ import { Auth } from './decorators/auth.decorator';
 import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import { UserActiveInterface } from 'src/common/interfaces/user-active.interface';
 import { Role } from 'src/common/enums/rol.enum';
-import { GoogleAuthGuard } from './guard/google-auth.guard';
+import { GoogleAuthGuard } from './guard/google-auth.guard'
 
 @ApiTags('auth')
 @Controller('auth')
@@ -39,6 +39,7 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  /*
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   async googleAuth(@Req() req) {
@@ -60,7 +61,7 @@ export class AuthController {
       res.status(500).json({ message: 'Error en la autenticación con Google' });
     }
   }
-
+*/
   //vista a perfil
   @ApiBearerAuth()
   @Get('profile')
