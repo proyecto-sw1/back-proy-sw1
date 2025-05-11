@@ -24,7 +24,7 @@ export class UsersService {
   findByEmailWithPassword(email: string) {
     return this.userRepository.findOne({
       where: { email },
-      select: ['id', 'name', 'email', 'password', 'role'],
+      select: ['id', 'name', 'email', 'password', ],
     });
   }
 
@@ -35,7 +35,7 @@ export class UsersService {
   async findOne(id: number) {
     return this.userRepository.findOne({
       where: { id },
-      select: ['id', 'name', 'email', 'role'],
+      select: ['id', 'name', 'email', ],
     });
   }
 

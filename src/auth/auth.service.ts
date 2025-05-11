@@ -46,7 +46,7 @@ export class AuthService {
       throw new UnauthorizedException('password is wrong');
     }
     //no poner informacion confidencial del usuario
-    const payload = { id: user.id, email: user.email, role: user.role };
+    const payload = { id: user.id, email: user.email };
 
     const token = await this.jwtService.signAsync(payload);
 
@@ -82,7 +82,7 @@ export class AuthService {
         id: existingUser.id,
         name: existingUser.name,
         email: existingUser.email,
-        role: existingUser.role,
+       
       },
     };
   }
