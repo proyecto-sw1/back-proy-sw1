@@ -62,6 +62,7 @@ export class AuthService {
     return await this.usersService.findOneByEmail(email);
   }
 
+  /* 
   //google
   async googleLogin(user: any): Promise<{ token: string; user: any }> {
     let existingUser = await this.usersService.findOneByEmail(user.email);
@@ -86,6 +87,6 @@ export class AuthService {
       },
     };
   }
-  
+  */
 
 }

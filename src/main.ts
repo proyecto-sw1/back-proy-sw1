@@ -26,13 +26,25 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
+    .setTitle('API de Proyecto SW1')
+    .setDescription('Documentación de la API del Proyecto SW1')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addTag('auth', 'Endpoints de autenticación')
+    .addTag('users', 'Endpoints de usuarios')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Ingresa tu token JWT',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('api', app, document);
 
   // Iniciar la aplicación en el puerto 3000
   await app.listen(parseInt(process.env.PORT) || 3000);
