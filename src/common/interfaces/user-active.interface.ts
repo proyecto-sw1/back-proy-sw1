@@ -1,6 +1,5 @@
 export interface UserActiveInterface {
-  id: number;  // Añadir esta propiedad
+  id: number;
   email: string;
-  role: string;
   name: string;
 }

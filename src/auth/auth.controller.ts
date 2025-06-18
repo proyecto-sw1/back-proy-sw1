@@ -7,7 +7,6 @@ import {
   Req,
   UseGuards,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -16,7 +15,6 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Auth } from './decorators/auth.decorator';
 import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import { UserActiveInterface } from 'src/common/interfaces/user-active.interface';
-import { Role } from 'src/common/enums/rol.enum';
 import { GoogleAuthGuard } from './guard/google-auth.guard'
 
 @ApiTags('auth')
@@ -65,7 +63,7 @@ export class AuthController {
   //vista a perfil
   @ApiBearerAuth()
   @Get('profile')
-  @Auth(Role.USER)
+  @Auth()
   profile(@ActiveUser() user: UserActiveInterface) {
     console.log(user);
     return this.authService.profile(user);
