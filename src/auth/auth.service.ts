@@ -56,9 +56,8 @@ export class AuthService {
     };
   }
 
-  //prueba para ruta con rol autorizado
-
-  async profile({ email, role }: { email: string; role: string }) {
+  // Retrieve profile information for the authenticated user
+  async profile({ email }: { email: string }) {
     return await this.usersService.findOneByEmail(email);
   }
 
