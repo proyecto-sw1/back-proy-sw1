@@ -5,6 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { ConsultasModule } from './consultas/consultas.module';
+import { IncidentesModule } from './incidentes/incidentes.module';
+import { PublicacionesModule } from './publicaciones/publicaciones.module';
+import { ComentariosModule } from './comentarios/comentarios.module';
+import { NotificationsGateway } from './notifications/notifications.gateway';
+import { UploadModule } from './upload/upload.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 
 @Module({
@@ -25,8 +32,14 @@ import { AuthModule } from './auth/auth.module';
     }),
     UsersModule,
     AuthModule,
+    ConsultasModule,
+    IncidentesModule,
+    PublicacionesModule,
+    ComentariosModule,
+    UploadModule,
+    NotificationsModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, NotificationsGateway],
 })
 export class AppModule {}
