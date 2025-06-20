@@ -26,42 +26,22 @@ export class PublicacionesService {
   ) {}
 
   /**
-   * Crear publicación sin archivo (solo texto o URL externa)
+   * Crear publicación - maneja tanto texto solo como texto + archivo
    */
-  async create(dto: CreatePublicacionDto, usuarioId: number): Promise<PublicacionResponseDto> {
-    // Validar que haya contenido
-    if (!dto.contenido_texto && !dto.ruta_media) {
-      throw new BadRequestException('Debe proporcionar contenido_texto o ruta_media');
-    }
-
-    const { usuario, incidente } = await this.validateUserAndIncident(usuarioId, dto.id_incidente);
-
-    // Crear publicación con estado pendiente
-    const nuevaPublicacion = this.publicacionRepo.create({
-      contenido_texto: dto.contenido_texto,
-      ruta_media: dto.ruta_media,
-      usuario,
-      incidente,
-      estado_revision: 'pendiente',
-    });
-
-    const publicacionGuardada = await this.publicacionRepo.save(nuevaPublicacion);
-
-    // Procesar moderación IA de forma asíncrona
-    this.procesarModeracionIA(publicacionGuardada.id_publicacion, dto.contenido_texto, dto.ruta_media);
-
-    return this.mapearAResponse(publicacionGuardada);
-  }
-
-  /**
-   * Crear publicación con archivo - Sube a S3 automáticamente
-   */
-  async createWithFile(
+  async create(
     dto: CreatePublicacionDto, 
-    file: Express.Multer.File, 
+    file: Express.Multer.File | null, 
     usuarioId: number
   ): Promise<PublicacionResponseDto> {
-    // Validar que al menos haya texto o archivo
+    console.log('🔵 create() - DTO recibido:', dto);
+    console.log('🔵 create() - Usuario ID:', usuarioId);
+    console.log('🔵 create() - Archivo:', file ? {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    } : 'No file');
+
+    // Validar que haya al menos contenido de texto o archivo
     if (!dto.contenido_texto && !file) {
       throw new BadRequestException('Debe proporcionar contenido_texto o un archivo');
     }
@@ -72,27 +52,39 @@ export class PublicacionesService {
     let rutaS3 = null;
     if (file) {
       try {
+        console.log('🔵 create() - Iniciando subida a S3...');
         rutaS3 = await this.awsS3Service.uploadFile(file, 'publicaciones');
-        console.log(`Archivo subido a S3: ${rutaS3}`);
+        console.log('🔵 create() - Archivo subido a S3 exitosamente:', rutaS3);
       } catch (error) {
-        console.error('Error subiendo archivo a S3:', error);
-        throw new BadRequestException('Error al subir el archivo');
+        console.error('❌ create() - Error subiendo archivo a S3:', error);
+        throw new BadRequestException(`Error al subir el archivo: ${error.message}`);
       }
     }
 
-    // Crear publicación con la ruta de S3
+    // Crear publicación con estado pendiente
     const nuevaPublicacion = this.publicacionRepo.create({
       contenido_texto: dto.contenido_texto,
-      ruta_media: rutaS3, // ← URL completa del bucket S3
+      ruta_media: rutaS3 || dto.ruta_media, // Usar S3 si existe, sino la URL externa
       usuario,
       incidente,
       estado_revision: 'pendiente',
     });
 
+    console.log('🔵 create() - Publicación creada en memoria:', {
+      contenido_texto: nuevaPublicacion.contenido_texto,
+      ruta_media: nuevaPublicacion.ruta_media,
+      estado_revision: nuevaPublicacion.estado_revision
+    });
+
     const publicacionGuardada = await this.publicacionRepo.save(nuevaPublicacion);
+    console.log('🔵 create() - Publicación guardada en BD con ID:', publicacionGuardada.id_publicacion);
 
     // Procesar moderación IA de forma asíncrona
-    this.procesarModeracionIA(publicacionGuardada.id_publicacion, dto.contenido_texto, rutaS3);
+    this.procesarModeracionIA(
+      publicacionGuardada.id_publicacion, 
+      dto.contenido_texto, 
+      nuevaPublicacion.ruta_media
+    );
 
     return this.mapearAResponse(publicacionGuardada);
   }
@@ -163,9 +155,12 @@ export class PublicacionesService {
    * Validar usuario e incidente
    */
   private async validateUserAndIncident(usuarioId: number, incidenteId?: number) {
+    console.log('🔍 validateUserAndIncident() - Validando usuario:', usuarioId, 'incidente:', incidenteId);
+    
     // Validar usuario
     const usuario = await this.userRepo.findOne({ where: { id: usuarioId } });
     if (!usuario) {
+      console.log('❌ validateUserAndIncident() - Usuario no encontrado:', usuarioId);
       throw new NotFoundException('Usuario no encontrado');
     }
 
@@ -176,10 +171,12 @@ export class PublicacionesService {
         where: { id_incidente: incidenteId } 
       });
       if (!incidente) {
+        console.log('❌ validateUserAndIncident() - Incidente no encontrado:', incidenteId);
         throw new NotFoundException('Incidente no encontrado');
       }
     }
 
+    console.log('✅ validateUserAndIncident() - Validación exitosa');
     return { usuario, incidente };
   }
 
@@ -188,7 +185,7 @@ export class PublicacionesService {
    */
   private async procesarModeracionIA(publicacionId: number, contenidoTexto?: string, rutaMedia?: string): Promise<void> {
     try {
-      console.log(`Iniciando moderación IA para publicación ${publicacionId}`);
+      console.log(`🤖 procesarModeracionIA() - Iniciando moderación IA para publicación ${publicacionId}`);
       
       const resultado = await this.moderacionIAService.revisarPublicacion(contenidoTexto, rutaMedia);
       
@@ -197,7 +194,7 @@ export class PublicacionesService {
         estado_revision: resultado
       });
 
-      console.log(`Publicación ${publicacionId} ${resultado} por IA`);
+      console.log(`🤖 procesarModeracionIA() - Publicación ${publicacionId} ${resultado} por IA`);
       
       // Emitir notificación WebSocket al autor
       const publicacion = await this.publicacionRepo.findOne({
@@ -214,7 +211,7 @@ export class PublicacionesService {
       }
       
     } catch (error) {
-      console.error(`Error en moderación IA para publicación ${publicacionId}:`, error);
+      console.error(`❌ procesarModeracionIA() - Error en moderación IA para publicación ${publicacionId}:`, error);
       
       // En caso de error, marcar como rechazado por seguridad
       await this.publicacionRepo.update(publicacionId, {
@@ -225,9 +222,9 @@ export class PublicacionesService {
       if (rutaMedia && rutaMedia.includes('s3.amazonaws.com')) {
         try {
           await this.awsS3Service.deleteFile(rutaMedia);
-          console.log(`Archivo S3 eliminado por rechazo: ${rutaMedia}`);
+          console.log(`🗑️ procesarModeracionIA() - Archivo S3 eliminado por rechazo: ${rutaMedia}`);
         } catch (deleteError) {
-          console.error('Error eliminando archivo S3:', deleteError);
+          console.error('❌ procesarModeracionIA() - Error eliminando archivo S3:', deleteError);
         }
       }
     }
@@ -237,7 +234,7 @@ export class PublicacionesService {
     return {
       id_publicacion: publicacion.id_publicacion,
       contenido_texto: publicacion.contenido_texto,
-      ruta_media: publicacion.ruta_media, // ← URL completa del S3 bucket
+      ruta_media: publicacion.ruta_media,
       estado_revision: publicacion.estado_revision,
       fecha_publicacion: publicacion.fecha_publicacion,
       fecha_actualizacion: publicacion.fecha_actualizacion,
