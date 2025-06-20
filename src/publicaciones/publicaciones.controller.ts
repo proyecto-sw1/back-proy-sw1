@@ -36,23 +36,10 @@ export class PublicacionesController {
   constructor(private readonly publicacionesService: PublicacionesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear nueva publicación (solo texto o con URL externa)' })
-  @ApiResponse({ 
-    status: 201, 
-    description: 'Publicación creada exitosamente (pendiente de moderación)',
-    type: PublicacionResponseDto 
+  @ApiOperation({ 
+    summary: 'Crear nueva publicación',
+    description: 'Crea una publicación con texto y/o archivo multimedia. Al menos uno de los dos debe estar presente.'
   })
-  @ApiResponse({ status: 400, description: 'Datos inválidos' })
-  @ApiResponse({ status: 404, description: 'Usuario o incidente no encontrado' })
-  async create(
-    @Body() createPublicacionDto: CreatePublicacionDto,
-    @ActiveUser() user: UserActiveInterface
-  ): Promise<PublicacionResponseDto> {
-    return this.publicacionesService.create(createPublicacionDto, user.id);
-  }
-
-  @Post('con-archivo')
-  @ApiOperation({ summary: 'Crear publicación con archivo multimedia (subido a S3)' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -60,33 +47,48 @@ export class PublicacionesController {
       properties: {
         contenido_texto: { 
           type: 'string', 
-          description: 'Texto de la publicación (opcional si hay archivo)' 
+          description: 'Texto de la publicación (opcional si hay archivo)',
+          example: 'Consulta sobre tráfico en la zona sur'
         },
         id_incidente: { 
           type: 'number', 
-          description: 'ID del incidente asociado (opcional)' 
+          description: 'ID del incidente asociado (opcional)',
+          example: 1
         },
         file: { 
           type: 'string', 
           format: 'binary', 
-          description: 'Archivo multimedia (imagen o video)' 
+          description: 'Archivo multimedia opcional (imagen o video)' 
         },
       },
     },
   })
   @ApiResponse({ 
     status: 201, 
-    description: 'Publicación con archivo creada exitosamente',
+    description: 'Publicación creada exitosamente (pendiente de moderación)',
     type: PublicacionResponseDto 
   })
+  @ApiResponse({ status: 400, description: 'Datos inválidos - debe proporcionar texto o archivo' })
+  @ApiResponse({ status: 404, description: 'Usuario o incidente no encontrado' })
   @UseInterceptors(FileInterceptor('file'))
-  async createWithFile(
+  async create(
     @Body() body: any,
     @UploadedFile() file: Express.Multer.File,
     @ActiveUser() user: UserActiveInterface
   ): Promise<PublicacionResponseDto> {
+    
+    console.log('📝 Creando publicación:');
+    console.log('📝 Body:', body);
+    console.log('📝 File:', file ? {
+      fieldname: file.fieldname,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    } : 'No file received');
+
     // Validar que al menos haya texto o archivo
     if (!body.contenido_texto && !file) {
+      console.log('❌ Error: No hay contenido_texto ni archivo');
       throw new BadRequestException('Debe proporcionar contenido_texto o un archivo');
     }
 
@@ -95,7 +97,9 @@ export class PublicacionesController {
       id_incidente: body.id_incidente ? parseInt(body.id_incidente) : undefined,
     };
 
-    return this.publicacionesService.createWithFile(createPublicacionDto, file, user.id);
+    console.log('📝 DTO creado:', createPublicacionDto);
+
+    return this.publicacionesService.create(createPublicacionDto, file, user.id);
   }
 
   @Get()
