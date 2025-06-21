@@ -49,10 +49,10 @@ export class AuthService {
     const payload = { id: user.id, email: user.email };
 
     const token = await this.jwtService.signAsync(payload);
-
+    const { password: _, ...userWithoutPassword } = user;
     return {
       token,
-      email,
+      user: userWithoutPassword,
     };
   }
 
