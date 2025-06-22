@@ -80,20 +80,23 @@ export class ComentariosService {
         );
       }
 
-      // Verificar que no esté respondiendo a su propio comentario
-      if (comentarioPadre.usuario.id === usuarioId) {
-        throw new BadRequestException(
-          'No puedes responder a tu propio comentario',
-        );
-      }
-    } else {
-      // Es comentario directo a publicación - verificar que no esté comentando su propia publicación
-      if (publicacion.usuario.id === usuarioId) {
-        throw new BadRequestException(
-          'No puedes comentar tu propia publicación',
-        );
-      }
+      // ✅ VALIDACIÓN REMOVIDA: Ahora SÍ puedes responder a tu propio comentario
+      // if (comentarioPadre.usuario.id === usuarioId) {
+      //   throw new BadRequestException(
+      //     'No puedes responder a tu propio comentario',
+      //   );
+      // }
     }
+    
+    // ✅ VALIDACIÓN REMOVIDA: Ahora SÍ puedes comentar tu propia publicación
+    // else {
+    //   // Es comentario directo a publicación - verificar que no esté comentando su propia publicación
+    //   if (publicacion.usuario.id === usuarioId) {
+    //     throw new BadRequestException(
+    //       'No puedes comentar tu propia publicación',
+    //     );
+    //   }
+    // }
 
     // Crear comentario con estado pendiente
     const nuevoComentario = this.comentarioRepo.create({
@@ -120,18 +123,24 @@ export class ComentariosService {
     try {
       if (comentarioPadre) {
         // Es respuesta a comentario - notificar al autor del comentario padre
-        await this.notificationsGateway.notificarNuevaRespuesta(
-          comentarioPadre.id_comentario,
-          comentarioPadre.usuario.id,
-          this.mapearAResponse(comentarioGuardado),
-        );
+        // Solo notificar si no es el mismo usuario (evitar autonotificaciones)
+        if (comentarioPadre.usuario.id !== usuarioId) {
+          await this.notificationsGateway.notificarNuevaRespuesta(
+            comentarioPadre.id_comentario,
+            comentarioPadre.usuario.id,
+            this.mapearAResponse(comentarioGuardado),
+          );
+        }
       } else {
         // Es comentario a publicación - notificar al autor de la publicación
-        await this.notificationsGateway.notificarNuevoComentario(
-          publicacion.id_publicacion,
-          publicacion.usuario.id,
-          this.mapearAResponse(comentarioGuardado),
-        );
+        // Solo notificar si no es el mismo usuario (evitar autonotificaciones)
+        if (publicacion.usuario.id !== usuarioId) {
+          await this.notificationsGateway.notificarNuevoComentario(
+            publicacion.id_publicacion,
+            publicacion.usuario.id,
+            this.mapearAResponse(comentarioGuardado),
+          );
+        }
       }
     } catch (notificationError) {
       console.error('Error enviando notificación:', notificationError);

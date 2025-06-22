@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ComentariosService } from './comentarios.service';
-import { ComentariosController, PublicacionComentariosController } from './comentarios.controller';
+import {
+  ComentariosController,
+  PublicacionComentariosController,
+} from './comentarios.controller';
 import { ComentarioEntity } from './entities/comentario.entity';
 import { User } from '../users/entities/user.entity';
 import { PublicacionEntity } from '../publicaciones/entities/publicacion.entity';
@@ -13,10 +16,10 @@ import { NotificationsModule } from '../notifications/notifications.module';
   imports: [
     TypeOrmModule.forFeature([ComentarioEntity, User, PublicacionEntity]),
     AuthModule,
-    NotificationsModule
+    NotificationsModule,
   ],
   controllers: [ComentariosController, PublicacionComentariosController],
   providers: [ComentariosService, ModeracionIAService],
-  exports: [ComentariosService, ModeracionIAService, TypeOrmModule]
+  exports: [ComentariosService, ModeracionIAService, TypeOrmModule],
 })
 export class ComentariosModule {}
