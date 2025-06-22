@@ -21,7 +21,7 @@ export class AuthService {
     const user = await this.usersService.findOneByEmail(email);
     //almacena el usuario reguistrado
     if (user) {
-      throw new BadGatewayException('User already exists');
+      throw new BadGatewayException('⚠️ Este correo ya está registrado. ¿Intentas volver del pasado?');
     }
     await this.usersService.create({
       name,
@@ -39,11 +39,11 @@ export class AuthService {
   async login({ email, password }: LogingDto) {
     const user = await this.usersService.findByEmailWithPassword(email);
     if (!user) {
-      throw new UnauthorizedException('email is wrong');
+      throw new UnauthorizedException('❌ El correo ingresado no coincide con ningún usuario. Verifica y vuelve a intentar.');
     }
     const isPasswordValid = await bcryptjs.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('password is wrong');
+      throw new UnauthorizedException('🔒 Contraseña incorrecta. ¿Estás seguro de que es tu cuenta?');
     }
     //no poner informacion confidencial del usuario
     const payload = { id: user.id, email: user.email };
@@ -62,31 +62,5 @@ export class AuthService {
     return await this.usersService.findOneByEmail(email);
   }
 
-  /* 
-  //google
-  async googleLogin(user: any): Promise<{ token: string; user: any }> {
-    let existingUser = await this.usersService.findOneByEmail(user.email);
-  
-    if (!existingUser) {
-      existingUser = await this.usersService.create({
-        email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
-        password: null, // No almacenamos contraseña para usuarios de Google
-      });
-    }
-  
-    const token = await this.jwtService.signAsync({ id: existingUser.id, email: existingUser.email });
-  
-    return {
-      token,
-      user: {
-        id: existingUser.id,
-        name: existingUser.name,
-        email: existingUser.email,
-       
-      },
-    };
-  }
-  */
 
 }

@@ -18,12 +18,9 @@ export class IncidenteMapaEntity {
 
   @ManyToOne(() => User, (user) => user.incidentes)
   usuario: User;
-
-  @Column({
-    type: 'enum',
-    enum: ['accidente', 'bloqueo', 'cierre'],
-  })
-  tipo_incidente: 'accidente' | 'bloqueo' | 'cierre';
+  
+  @Column({ type: 'varchar', length: 100 })
+  tipo_incidente: string;
 
   @Column({ type: 'varchar', length: 100 })
   latitud_longitud: string; // "lat,lng" ejemplo: "-16.5000,-68.1193"
