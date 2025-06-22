@@ -1,4 +1,4 @@
-
+// src/incidentes/incidentes.service.ts
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -30,12 +30,14 @@ export class IncidentesService {
     // Crear incidente
     const nuevoIncidente = this.incidenteRepo.create({
       tipo_incidente: dto.tipo_incidente.trim(),
+      descripcion: dto.descripcion.trim(),
       latitud_longitud: dto.latitud_longitud.trim(),
       usuario,
     });
 
     console.log('🔵 create() - Incidente creado en memoria:', {
       tipo_incidente: nuevoIncidente.tipo_incidente,
+      descripcion: nuevoIncidente.descripcion,
       latitud_longitud: nuevoIncidente.latitud_longitud,
     });
 
@@ -121,6 +123,39 @@ export class IncidentesService {
     return incidentes.map((incidente) => this.mapearAResponse(incidente));
   }
 
+  async findByTipo(tipoIncidente: string): Promise<IncidenteResponseDto[]> {
+    console.log('🔍 findByTipo() - Buscando incidentes por tipo:', tipoIncidente);
+
+    const incidentes = await this.incidenteRepo.find({
+      where: { 
+        tipo_incidente: tipoIncidente 
+      },
+      relations: ['usuario', 'publicaciones'],
+      order: { fecha_incidente: 'DESC' },
+    });
+
+    console.log('🔍 findByTipo() - Encontrados:', incidentes.length, 'incidentes del tipo');
+
+    return incidentes.map((incidente) => this.mapearAResponse(incidente));
+  }
+
+  async searchByDescription(searchTerm: string): Promise<IncidenteResponseDto[]> {
+    console.log('🔍 searchByDescription() - Buscando en descripciones:', searchTerm);
+
+    const incidentes = await this.incidenteRepo
+      .createQueryBuilder('incidente')
+      .leftJoinAndSelect('incidente.usuario', 'usuario')
+      .leftJoinAndSelect('incidente.publicaciones', 'publicaciones')
+      .where('incidente.descripcion LIKE :searchTerm', { searchTerm: `%${searchTerm}%` })
+      .orWhere('incidente.tipo_incidente LIKE :searchTerm', { searchTerm: `%${searchTerm}%` })
+      .orderBy('incidente.fecha_incidente', 'DESC')
+      .getMany();
+
+    console.log('🔍 searchByDescription() - Encontrados:', incidentes.length, 'incidentes con el término');
+
+    return incidentes.map((incidente) => this.mapearAResponse(incidente));
+  }
+
   async update(id: number, dto: UpdateIncidenteDto, usuarioId: number): Promise<IncidenteResponseDto> {
     console.log('🔄 update() - Actualizando incidente:', id, 'con datos:', dto);
 
@@ -141,6 +176,9 @@ export class IncidentesService {
     // Actualizar campos si están presentes
     if (dto.tipo_incidente) {
       incidente.tipo_incidente = dto.tipo_incidente.trim();
+    }
+    if (dto.descripcion) {
+      incidente.descripcion = dto.descripcion.trim();
     }
     if (dto.latitud_longitud) {
       incidente.latitud_longitud = dto.latitud_longitud.trim();
@@ -184,6 +222,7 @@ export class IncidentesService {
     const response: IncidenteResponseDto = {
       id_incidente: incidente.id_incidente,
       tipo_incidente: incidente.tipo_incidente,
+      descripcion: incidente.descripcion,
       latitud_longitud: incidente.latitud_longitud,
       fecha_incidente: incidente.fecha_incidente,
       usuario: {

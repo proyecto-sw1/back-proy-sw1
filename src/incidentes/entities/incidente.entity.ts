@@ -18,9 +18,12 @@ export class IncidenteMapaEntity {
 
   @ManyToOne(() => User, (user) => user.incidentes)
   usuario: User;
-  
+
   @Column({ type: 'varchar', length: 100 })
   tipo_incidente: string;
+
+  @Column({ type: 'text' })
+  descripcion: string;
 
   @Column({ type: 'varchar', length: 100 })
   latitud_longitud: string; // "lat,lng" ejemplo: "-16.5000,-68.1193"
