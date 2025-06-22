@@ -1,6 +1,7 @@
 export class IncidenteResponseDto {
   id_incidente: number;
   tipo_incidente: string;
+  descripcion: string;
   latitud_longitud: string;
   fecha_incidente: Date;
   usuario: {

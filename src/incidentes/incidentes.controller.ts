@@ -1,3 +1,4 @@
+// src/incidentes/incidentes.controller.ts
 import {
   Controller,
   Get,
@@ -34,7 +35,7 @@ export class IncidentesController {
   @Post()
   @ApiOperation({ 
     summary: 'Crear nuevo incidente',
-    description: 'Permite a un usuario reportar un nuevo incidente en el mapa con coordenadas específicas'
+    description: 'Permite a un usuario reportar un nuevo incidente en el mapa con coordenadas específicas y descripción detallada'
   })
   @ApiResponse({
     status: 201,
@@ -43,7 +44,7 @@ export class IncidentesController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Datos inválidos - verifique el formato de coordenadas',
+    description: 'Datos inválidos - verifique el formato de coordenadas y que la descripción tenga al menos 10 caracteres',
   })
   @ApiResponse({
     status: 404,
@@ -111,6 +112,46 @@ export class IncidentesController {
     return this.incidentesService.findByUser(user.id);
   }
 
+  @Get('tipo/:tipo')
+  @ApiOperation({ 
+    summary: 'Obtener incidentes por tipo',
+    description: 'Busca todos los incidentes de un tipo específico'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de incidentes del tipo especificado',
+    type: [IncidenteResponseDto],
+  })
+  async findByTipo(
+    @Param('tipo') tipo: string,
+  ): Promise<IncidenteResponseDto[]> {
+    return this.incidentesService.findByTipo(tipo);
+  }
+
+  @Get('buscar')
+  @ApiOperation({ 
+    summary: 'Buscar incidentes por texto',
+    description: 'Busca incidentes por términos en la descripción o tipo de incidente'
+  })
+  @ApiQuery({
+    name: 'q',
+    description: 'Término de búsqueda',
+    example: 'accidente'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de incidentes que coinciden con la búsqueda',
+    type: [IncidenteResponseDto],
+  })
+  async searchIncidentes(
+    @Query('q') searchTerm: string,
+  ): Promise<IncidenteResponseDto[]> {
+    if (!searchTerm || searchTerm.trim().length < 3) {
+      return [];
+    }
+    return this.incidentesService.searchByDescription(searchTerm.trim());
+  }
+
   @Get('area')
   @ApiOperation({ 
     summary: 'Obtener incidentes en un área específica',
@@ -168,7 +209,7 @@ export class IncidentesController {
   @Patch(':id')
   @ApiOperation({ 
     summary: 'Actualizar incidente propio',
-    description: 'Permite al autor del incidente actualizar el tipo o las coordenadas'
+    description: 'Permite al autor del incidente actualizar el tipo, descripción o las coordenadas'
   })
   @ApiResponse({
     status: 200,

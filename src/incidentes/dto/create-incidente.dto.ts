@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsLatLong, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class CreateIncidenteDto {
   @ApiProperty({
@@ -13,12 +13,26 @@ export class CreateIncidenteDto {
       'Semáforo dañado',
       'Bache en la vía',
       'Inundación',
+      'Robo',
+      'Disturbios',
       'Otro'
     ]
   })
   @IsString()
   @IsNotEmpty({ message: 'El tipo de incidente es requerido' })
+  @MaxLength(100, { message: 'El tipo de incidente no puede exceder 100 caracteres' })
   tipo_incidente: string;
+
+  @ApiProperty({
+    description: 'Descripción detallada del incidente',
+    example: 'Colisión entre dos vehículos en la intersección. Tráfico completamente bloqueado hacia el sur.',
+    maxLength: 500
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'La descripción del incidente es requerida' })
+  @MinLength(10, { message: 'La descripción debe tener al menos 10 caracteres' })
+  @MaxLength(500, { message: 'La descripción no puede exceder 500 caracteres' })
+  descripcion: string;
 
   @ApiProperty({
     description: 'Coordenadas geográficas en formato "latitud,longitud"',
