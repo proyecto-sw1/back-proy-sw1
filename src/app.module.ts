@@ -28,7 +28,9 @@ import { NotificationsModule } from './notifications/notifications.module';
       database: process.env.DATABASE_NAME,
       autoLoadEntities: true, // carga automaticamente las emtidades
       synchronize: true, // Solo para desarrollo; en producción usa migraciones
-      ssl: process.env.DATABASE_SSL === 'true',
+      ssl: process.env.DATABASE_SSL === 'true' ? {
+        rejectUnauthorized: false // Necesario para Render y otros servicios en la nube
+      } : false,
     }),
     UsersModule,
     AuthModule,
