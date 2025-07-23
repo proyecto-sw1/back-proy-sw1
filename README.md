@@ -1,41 +1,292 @@
+# 🏙️ Sistema de Gestión Ciudadana - Backend
+
+**Plataforma digital para la gestión ciudadana con red social integrada, moderación IA y notificaciones en tiempo real**
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 📋 Descripción del Proyecto
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Este backend, desarrollado con **NestJS**, implementa un sistema completo de gestión ciudadana que permite a los usuarios:
 
-## Description
+- 🗺️ **Reportar incidentes urbanos** con ubicación GPS
+- 💬 **Realizar consultas** de texto y voz a autoridades
+- 📱 **Interactuar socialmente** mediante publicaciones y comentarios
+- 🤖 **Moderación automática** de contenido con IA
+- 🔔 **Recibir notificaciones** en tiempo real
+- 📁 **Subir archivos multimedia** a la nube
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## 🏗️ Arquitectura del Sistema
 
-```bash
-$ yarn install
+### **Tipo de Arquitectura**
+**Monolito Modularizado** con servicios externos integrados:
+- ✅ Un solo proceso NestJS con múltiples módulos
+- ✅ Base de datos PostgreSQL centralizada  
+- ✅ Integración con servicios AWS (S3)
+- ✅ WebSockets para comunicación en tiempo real
+
+---
+
+## 📁 Estructura de Módulos
+
+### **🔐 AUTH (`/src/auth/`)**
+**Sistema de autenticación y autorización**
+- 🔑 Registro y login con JWT
+- 🔒 Encriptación bcrypt de contraseñas
+- 🛡️ Guards para protección de rutas
+- 👤 Decoradores personalizados (`@ActiveUser`, `@Roles`)
+- 🌍 Integración con Google OAuth
+
+**Endpoints principales:**
+- `POST /api/auth/register` - Registro de usuarios
+- `POST /api/auth/login` - Inicio de sesión
+
+---
+
+### **👥 USERS (`/src/users/`)**
+**Gestión completa de usuarios**
+- 📝 CRUD de usuarios con validaciones
+- 🔗 Relaciones con incidentes, publicaciones, comentarios
+- 📱 Tracking de dispositivos únicos
+- 🗑️ Soft deletes
+
+**Entidad User:**
+```typescript
+{
+  id: number
+  name: string
+  email: string (único)
+  password: string (encriptado)
+  dispositivo?: string
+  createdAt: Date
+  updatedAt: Date
+  deletedAt?: Date
+}
 ```
 
-## Documentación de la API
+---
 
-La documentación de la API está disponible a través de Swagger UI. Una vez que la aplicación esté en ejecución, puedes acceder a la documentación en:
+### **❓ CONSULTAS (`/src/consultas/`)**
+**Sistema de consultas ciudadanas**
+- 📝 Consultas de texto y voz
+- 📋 Historial personal de consultas
+- 🔍 Búsqueda por ID específico
 
+**Endpoints:**
+- `POST /api/consultas` - Crear nueva consulta
+- `GET /api/consultas/historial` - Ver historial personal
+- `GET /api/consultas/historial/:id` - Consulta específica
+
+---
+
+### **🗺️ INCIDENTES (`/src/incidentes/`)**
+**Gestión de incidentes urbanos con geolocalización**
+- 📍 Reportes con coordenadas GPS (lat,lng)
+- 🔍 Búsqueda por área geográfica
+- 🏷️ Filtrado por tipo de incidente
+- 📊 Paginación y estadísticas
+
+**Características especiales:**
+- Búsqueda por área con coordenadas bounds
+- Filtrado por tipo de incidente
+- Búsqueda textual en descripciones
+- Relación con múltiples publicaciones
+
+**Endpoints avanzados:**
+- `GET /api/incidentes/area?latMin=-16.55&latMax=-16.45&lngMin=-68.15&lngMax=-68.05`
+- `GET /api/incidentes/tipo/accidente`
+- `GET /api/incidentes/buscar?q=tráfico`
+
+---
+
+### **📱 PUBLICACIONES (`/src/publicaciones/`)**
+**Red social con moderación IA**
+- 📸 Publicaciones con texto y/o multimedia
+- 🤖 **Moderación automática por IA**
+- 🔗 Asociación opcional con incidentes
+- 📄 Feed paginado con estados
+
+**Estados de moderación:**
+- ⏳ `pendiente` - En proceso de revisión
+- ✅ `aprobado` - Publicado públicamente  
+- ❌ `rechazado` - Bloqueado por IA
+
+**Flujo de moderación:**
+1. Usuario crea publicación → Estado: `pendiente`
+2. **IA procesa asíncronamente** en segundo plano
+3. Estado actualizado según resultado IA
+4. **Notificación WebSocket** al usuario
+
+---
+
+### **💬 COMENTARIOS (`/src/comentarios/`)**
+**Sistema de comentarios jerárquicos con IA**
+- 🌳 **Comentarios anidados** (respuestas a respuestas)
+- 🤖 **Moderación automática por IA**
+- 🔔 **Notificaciones en tiempo real**
+- 📊 Paginación y threading
+
+**Características:**
+- Estructura de árbol con `comentario_padre`
+- Moderación IA de contenido de texto
+- Notificaciones automáticas a autores
+- Prevención de autonotificaciones
+
+---
+
+### **🔔 NOTIFICATIONS (`/src/notifications/`)**
+**Sistema de notificaciones en tiempo real**
+- ⚡ **WebSockets con Socket.IO**
+- 🔐 Autenticación JWT en WebSockets
+- 📱 Soporte multi-dispositivo
+- 🏠 Salas personales por usuario
+
+**Tipos de notificaciones:**
+- `nuevo_comentario` - Comentarios en tus publicaciones
+- `nueva_respuesta` - Respuestas a tus comentarios  
+- `publicacion_aprobada/rechazada` - Resultado moderación IA
+- `comentario_aprobado/rechazado` - Resultado moderación IA
+
+**Conexión WebSocket:**
+```javascript
+// Cliente se conecta a /notifications con JWT
+socket.emit('connect', { token: 'jwt_token_here' })
+```
+
+---
+
+### **📁 UPLOAD (`/src/upload/`)**
+**Gestión de archivos multimedia con AWS S3**
+- ☁️ Subida directa a AWS S3
+- ✅ Validación de tipos MIME
+- 📏 Límites de tamaño por tipo
+- 🔒 URLs firmadas para acceso temporal
+
+**Tipos permitidos:**
+- **Imágenes**: jpeg, png, gif, webp (máx. 10MB)
+- **Videos**: mp4, mpeg, quicktime (máx. 50MB)
+
+**Endpoints:**
+- `POST /api/upload/single` - Subir archivo individual
+
+---
+
+## 🤖 Inteligencia Artificial Integrada
+
+### **ModeracionIAService - Moderación Automática de Contenido**
+
+**Ubicación:** `src/common/services/moderacion-ia.service.ts`
+
+#### **🔍 Análisis de Texto**
+```typescript
+async revisarTexto(texto: string): Promise<'aprobado' | 'rechazado'>
+```
+- **Detección de palabras prohibidas**: spam, ofensivo, violencia, drogas, estafa
+- **Probabilidad de aprobación**: 90% si no hay palabras prohibidas
+- **Delay simulado**: 1 segundo (simula procesamiento real)
+
+#### **🖼️ Análisis de Imágenes**  
+```typescript
+async revisarImagen(rutaImagen: string): Promise<'aprobado' | 'rechazado'>
+```
+- **Validación de rutas** y nombres de archivo
+- **Detección de contenido sospechoso**: virus, malware, hack
+- **Probabilidad de aprobación**: 85% para imágenes válidas
+- **Delay simulado**: 2 segundos
+
+#### **📋 Análisis Completo**
+```typescript
+async revisarPublicacion(contenidoTexto?: string, rutaMedia?: string)
+```
+- **Procesamiento paralelo** de texto e imagen
+- **Política estricta**: Si cualquier elemento es rechazado, toda la publicación se rechaza
+- **Notificación automática** al usuario vía WebSocket
+
+### **🔄 Flujo de Moderación IA**
+
+1. **Usuario crea contenido** → Estado inicial: `pendiente`
+2. **Procesamiento asíncrono** (no bloquea respuesta al usuario)
+3. **IA analiza contenido** según tipo
+4. **Estado actualizado** en base de datos
+5. **Notificación WebSocket** enviada al usuario
+6. **Limpieza automática** de archivos rechazados en S3
+
+---
+
+## ☁️ Servicios Externos Integrados
+
+### **🗄️ AWS S3 (Almacenamiento)**
+**Servicio:** `AwsS3Service`
+- **Configuración**: Variables de entorno para credenciales
+- **Características**: ACLs públicos, URLs firmadas, validación de tipos
+- **Gestión**: Subida, eliminación y acceso temporal a archivos
+
+### **🐘 PostgreSQL (Base de Datos)**
+- **ORM**: TypeORM con autoLoadEntities
+- **Configuración**: SSL para servicios en la nube (Render, etc.)
+- **Migraciones**: Sincronización automática en desarrollo
+
+### **⚡ Socket.IO (WebSockets)**
+- **Namespace**: `/notifications` para notificaciones
+- **Autenticación**: JWT en handshake
+- **Salas**: Una sala personal por usuario (`user_${userId}`)
+
+---
+
+## 🚀 Instalación y Configuración
+
+### **📋 Prerrequisitos**
+- Node.js 18+
+- PostgreSQL 13+
+- Cuenta AWS con bucket S3
+- Yarn package manager
+
+### **⚙️ Variables de Entorno**
+Crear archivo `.env`:
+```env
+# Base de Datos
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USER=tu_usuario
+DATABASE_PASSWORD=tu_password
+DATABASE_NAME=sistema_ciudadano
+DATABASE_SSL=false
+
+# JWT
+JWT_SECRET=tu_jwt_secret_muy_seguro
+
+# AWS S3
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=tu_access_key
+AWS_SECRET_ACCESS_KEY=tu_secret_key
+AWS_S3_BUCKET_NAME=tu-bucket-name
+
+# Puerto
+PORT=3000
+```
+
+### **📦 Instalación**
+```bash
+# Instalar dependencias
+yarn install
+
+# Modo desarrollo
+yarn run start:dev
+
+# Modo producción
+yarn run build
+yarn run start:prod
+```
+
+---
+
+## 📚 Documentación de la API
+
+### **🔗 Swagger UI**
+La documentación completa está disponible en:
 ```
 http://localhost:3000/api
 ```
@@ -46,90 +297,106 @@ La documentación incluye:
 - Autenticación JWT
 - Ejemplos de peticiones y respuestas
 
-### ¿Cómo hacer que Swagger reconozca tus endpoints y modelos?
+### **🔑 Autenticación**
+- **Método**: Bearer Token (JWT)
+- **Header**: `Authorization: Bearer <token>`
+- **Obtención**: Endpoint `POST /api/auth/login`
 
-Para que Swagger documente correctamente tus endpoints y modelos en futuros módulos, debes usar los siguientes decoradores:
+### **📋 Endpoints Principales**
 
-- `@ApiTags('nombre')` en la clase del controlador para agrupar los endpoints bajo una sección en Swagger.
-- `@ApiProperty({ description: 'Descripción del atributo' })` en cada propiedad de tus DTOs para que Swagger muestre los atributos en el request body.
-- `@ApiOperation({ summary: 'Descripción corta de la operación' })` en los métodos del controlador para describir el propósito del endpoint.
-- `@ApiResponse({ status: 200, description: 'Respuesta exitosa' })` para documentar las posibles respuestas.
-- `@ApiBearerAuth()` en los endpoints que requieren autenticación JWT.
+#### **Autenticación**
+- `POST /api/auth/register` - Registro
+- `POST /api/auth/login` - Login
 
-**Ejemplo mínimo para un DTO:**
-```ts
-import { ApiProperty } from '@nestjs/swagger';
+#### **Incidentes**
+- `GET /api/incidentes` - Lista paginada
+- `POST /api/incidentes` - Crear incidente
+- `GET /api/incidentes/area` - Búsqueda geográfica
+- `GET /api/incidentes/tipo/:tipo` - Por tipo
 
-export class ExampleDto {
-  @ApiProperty({ description: 'Nombre del ejemplo' })
-  name: string;
-}
-```
+#### **Publicaciones**  
+- `GET /api/publicaciones` - Feed público (solo aprobadas)
+- `POST /api/publicaciones` - Crear con multimedia
+- `GET /api/publicaciones/mis-publicaciones` - Propias
+- `GET /api/publicaciones/incidente/:id` - Por incidente
 
-**Ejemplo mínimo para un controlador:**
-```ts
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+#### **Comentarios**
+- `GET /api/publicaciones/:id/comentarios` - De una publicación
+- `POST /api/publicaciones/:id/comentarios` - Crear comentario
+- `POST /api/publicaciones/:id/comentarios/:id/responder` - Responder
 
-@ApiTags('ejemplo')
-@Controller('ejemplo')
-export class EjemploController {
-  @Post()
-  @ApiOperation({ summary: 'Crear un ejemplo' })
-  create(@Body() dto: ExampleDto) {
-    // ...
-  }
-}
-```
+---
 
-## Compile and run the project
+## 🧪 Testing
 
 ```bash
-# development
-$ yarn run start
+# Tests unitarios
+yarn run test
 
-# watch mode
-$ yarn run start:dev
+# Tests e2e
+yarn run test:e2e
 
-# production mode
-$ yarn run start:prod
+# Coverage
+yarn run test:cov
 ```
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ yarn run test
+## 📊 Características Técnicas
 
-# e2e tests
-$ yarn run test:e2e
+### **🏗️ Arquitectura**
+- **Framework**: NestJS (Node.js + TypeScript)
+- **Base de datos**: PostgreSQL con TypeORM
+- **Autenticación**: JWT + bcrypt
+- **WebSockets**: Socket.IO para tiempo real
+- **Almacenamiento**: AWS S3
+- **Documentación**: Swagger/OpenAPI
 
-# test coverage
-$ yarn run test:cov
-```
+### **🔒 Seguridad**
+- Encriptación de contraseñas con bcrypt
+- Validación de datos con class-validator
+- Guards personalizados para rutas protegidas
+- Sanitización automática de inputs
+- CORS configurado para frontend
 
-## Resources
+### **⚡ Performance**
+- Procesamiento asíncrono de IA
+- Paginación en todos los listados
+- Índices de base de datos optimizados
+- Carga lazy de relaciones TypeORM
+- Compresión de respuestas HTTP
 
-Check out a few resources that may come in handy when working with NestJS:
+### **🚀 Escalabilidad**
+- Modularización clara de responsabilidades
+- Servicios desacoplados
+- Preparado para migración a microservicios
+- Cacheo configurado para consultas frecuentes
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## 👥 Contribución
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+1. Fork del repositorio
+2. Crear branch para feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit de cambios (`git commit -m 'Agregar nueva funcionalidad'`)
+4. Push a branch (`git push origin feature/nueva-funcionalidad`)
+5. Crear Pull Request
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 📄 Licencia
 
-## License
+Este proyecto es privado y está bajo licencia UNLICENSED.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## 🆘 Soporte
+
+Para soporte técnico o preguntas sobre el proyecto:
+- 📧 **Email**: equipo-desarrollo@proyecto.com
+- 📱 **Slack**: #backend-support
+- 📖 **Wiki**: [Documentación interna](link-interno)
+
+---
+
+**Desarrollado con ❤️ por el equipo de SW1**

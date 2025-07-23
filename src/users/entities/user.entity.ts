@@ -2,6 +2,8 @@ import { ComentarioEntity } from 'src/comentarios/entities/comentario.entity';
 import { Consulta } from 'src/consultas/entities/consulta.entity';
 import { IncidenteMapaEntity } from 'src/incidentes/entities/incidente.entity';
 import { PublicacionEntity } from 'src/publicaciones/entities/publicacion.entity';
+import { EmergencyContact } from 'src/emergency/entities/emergency-contact.entity';
+import { EmergencyAlert } from 'src/emergency/entities/emergency-alert.entity';
 
 import {
   Column,
@@ -52,4 +54,11 @@ export class User {
 
   @OneToMany(() => ComentarioEntity, (comentario) => comentario.usuario)
   comentarios: ComentarioEntity[];
+
+  // Relaciones de emergencia
+  @OneToMany(() => EmergencyContact, (contact) => contact.user)
+  emergencyContacts: EmergencyContact[];
+
+  @OneToMany(() => EmergencyAlert, (alert) => alert.user)
+  emergencyAlerts: EmergencyAlert[];
 }
