@@ -17,7 +17,7 @@ interface UserSocket {
 }
 
 interface NotificationPayload {
-  type: 'nuevo_comentario' | 'nueva_respuesta' | 'publicacion_aprobada' | 'publicacion_rechazada' | 'comentario_aprobado' | 'comentario_rechazado';
+  type: 'nuevo_comentario' | 'nueva_respuesta' | 'publicacion_aprobada' | 'publicacion_rechazada' | 'comentario_aprobado' | 'comentario_rechazado' | 'alerta_emergencia';
   data: any;
   timestamp: Date;
   recipientId: number;
@@ -245,5 +245,48 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     let total = 0;
     this.connectedUsers.forEach(sockets => total += sockets.length);
     return total;
+  }
+
+  /**
+   * NOTIFICACIÓN: Alerta de emergencia
+   */
+  async notificarAlertaEmergencia(contact: any, user: any, alert: any) {
+    const notification: NotificationPayload = {
+      type: 'alerta_emergencia',
+      data: {
+        alert_id: alert.id,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        contact: {
+          id: contact.id,
+          name: contact.name,
+          phone: contact.phone,
+          email: contact.email,
+        },
+        alert: {
+          type: alert.type,
+          description: alert.description,
+          location: alert.location,
+          latitude: alert.latitude,
+          longitude: alert.longitude,
+          videoUrl: alert.videoUrl,
+          audioUrl: alert.audioUrl,
+          duration: alert.duration,
+          metadata: alert.metadata,
+        },
+        timestamp: alert.createdAt,
+        message: `¡ALERTA DE EMERGENCIA! ${user.name} ha activado el botón de pánico.`,
+      },
+      timestamp: new Date(),
+      recipientId: contact.id, // Enviar al contacto de emergencia
+    };
+
+    // Enviar notificación al contacto
+    this.enviarNotificacionAUsuario(contact.id, notification);
+    
+    this.logger.log(`Alerta de emergencia enviada a contacto ${contact.name} para usuario ${user.id}`);
   }
 }
