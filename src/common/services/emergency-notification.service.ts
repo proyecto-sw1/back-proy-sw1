@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import * as fs from 'fs';
 
 export interface NotificationContact {
   id: number;
@@ -45,23 +46,16 @@ export class EmergencyNotificationService {
     try {
       // Verificar si Firebase ya está inicializado
       if (!admin.apps.length) {
-        const serviceAccount = {
-          type: "service_account",
-          project_id: "proyecto-sw1-c8ae5",
-          private_key_id: "4b047272bc318340f0018b9bfe42cc71620695b8",
-          private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDk93zZyc+Fht4B\nRdDRmgI6iQqfZO6o08CLJtyDKJ8OiJtUg7OIFryOERKFf0mTjRoKrBtUk6y62L7p\nGq8/KpacOGt4/l7W0zGt/zKHuIv1Ijc6ZBxUHpZe8sAWqVqQX0juvcOUiDdfh742\nIvRcZCTfNcoQKqQnyD4TNhDeUD3DglMYUtrqXB6L3DR2NL6+lBByEfO4MKu1XC/2\nqHgp3pjDk8uYVS5PaC7EHM2FtCxq4RPKMXGPN+AnR6Y/xXQbXRIztaC0VUnQ3Pjd\naa2XVZs9+p+lJUImiGJrYLv6MoHeQBjTeUeF3kDCJHk6NT/n9dkpwbSZbZvfYZ8Y\n1gFsg5IDAgMBAAECggEAIT6L2qVSI72Kw12LLbuyQiR+rdj+S/X+2VVppAOEYJxW\nDUXYDdTbSLdS3J44JRvSIaWOjE+qvzBUO807j6zT1FfexuEMDR358x0ADbOuYoe2\nxBwf/ti4FY4idMffFeI32S4lVQ4YGB9B72NQ3o9NyTjqn0FJt1r8JFbvyQ+WgCnI\nL1tcc44y95iABS4AC7fOIKg0D9pzwi3Ei7GdskPavHKfvK9YKWfLZbpDDaAiI2tW\nVNXbVFpcMKyNQw70uO8c0YJZtqKA66lN3GeLxWptuMzdjQsLJZb5Vy+pPhLMHAil\nQRgv292c2OQlBxqyyiuBWGKR3lFcYt0/Sp9fhjWxkQKBgQDznadM9N2htVp0PYWy\njpHi9tkrMPWIuY21lwyP21rlu4Fhplb5DX1L4GnyLBcUvZ1ag6m9/S5lhyZgb8AZ\npYH0bmEpABRKKfUYgJLeLohYOqQmx28o2OVhhfC3uaAgnkrdG3NFb1OrHKfAotQC\nmplL88qOPwL4pG7agkPV62BScQKBgQDwmzH4LRYIyCebj4Oh/mAn2JhI5Ypuf4Z2\n/4TXNnYc8T+DNnk94wRGZ6EGlkMzbSQJxBxFfT+9/aq1+F7JUbBK6VzUHjGmEopf\nb4M61gLWGgPbBp2SOxVir6FtQAvNxQCQujRIi/09znYeUfMIQIi6CPHbQVKpQCaK\nGoBNVVU9swKBgDWZQxzQZw7UCsG2Y3sEmR5ZdzBkhjD9uirwv8fK2DXhSjcE1O/Y\nwu91wXmRr8ZVbZBjlW4CjTmzQYNIMvixjGUN//x4Uv56Or2YVDfj/wWCaWlKya8w\nAU+ym2KgyZVDnm8FQhhNxRfJpzLf4EtuXjnyumcPgATakLUsoeYn8jpRAoGBALGa\nXXBMF4+z70iszwWst12yS/bDOUQHbkI4qt4RnW4Pxkoc07IS+PzfUcWC9WfokEmF\nMTk6Eusza+eWxqDkY7VoPNV21D86QFnh/oRXpRBVc7MhVv6yDj8iVY5HUG87lAdA\n64cBjpUo6ZfH9hWJTWPFZoHp3hKA//HBTiPHcXxxAoGAAuh412TvlO9wdfxqUErW\nO5ER45RjWwr5uXZUIL2jpI9Ok5dmWIQo/KpftKoijw8FeP0tdYxVmonR/2j7YJRQ\nVrBr8spgoe00EbUQ8e6h2h8vr6LBwVhcYD7ro1FQxthJrlZf1ARWatZC9Jissjb8\nWSP6CTkyXZ7uGGBgIqq5A2Q=\n-----END PRIVATE KEY-----\n",
-          client_email: "firebase-adminsdk-fbsvc@proyecto-sw1-c8ae5.iam.gserviceaccount.com",
-          client_id: "106199521598569659174",
-          auth_uri: "https://accounts.google.com/o/oauth2/auth",
-          token_uri: "https://oauth2.googleapis.com/token",
-          auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-          client_x509_cert_url: "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40proyecto-sw1-c8ae5.iam.gserviceaccount.com",
-          universe_domain: "googleapis.com"
-        };
+        const pathToSecret = process.env.PATH_TO_SECRET || this.configService.get<string>('PATH_TO_SECRET');
+        if (!pathToSecret || !fs.existsSync(pathToSecret)) {
+          this.logger.error('❌ No se encontró el archivo de credenciales de Firebase. Verifica PATH_TO_SECRET en tu .env');
+          return;
+        }
+        const serviceAccount = JSON.parse(fs.readFileSync(pathToSecret, 'utf8'));
 
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-          projectId: 'proyecto-sw1-c8ae5'
+          projectId: serviceAccount.project_id
         });
 
         this.logger.log('✅ Firebase Admin SDK inicializado correctamente');
